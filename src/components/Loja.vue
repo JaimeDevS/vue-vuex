@@ -17,12 +17,18 @@ export default {
     data() {
         return {
             sequencia: 1,
-            quantidade: 1,
-            preco: 9.99,
+        }
+    },
+    computed: {
+        quantidade() {
+            return this.$store.state.parametros.quantidade
+        },
+        preco() {
+            return this.$store.state.parametros.preco
         }
     },
     methods: {
-        ...mapActions(['adicionarProduto']),
+        ...mapActions('carrinho',['adicionarProduto']),
         adicionar() {
             const produto = {
                 id: this.sequencia,
@@ -31,8 +37,6 @@ export default {
                 preco: this.preco
             }
             this.sequencia++
-            // eslint-disable-next-line
-            //console.log(produto)
 
             //this.$store.state.produtos.push(produto)
             //this.$store.commit('adicionarProduto', produto)
