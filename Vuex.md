@@ -8,7 +8,7 @@
 - yarn add vuex
 
 Após a instalação é necessário registrar:
-/plugins/index.js
+/plugins/*index.js*
 
 ```javascript
 /**
@@ -115,6 +115,7 @@ export default {
 }
 ```
 No exemplo abaixo o nome da função foi renomeada para **total**
+Exemplo 1
 ```javascript
 import { mapGetters } from 'vuex'
 
@@ -123,5 +124,288 @@ export default {
         total: 'valorTotal'
     }),
 
+}
+```
+Exemplo 2
+```javascript
+import { mapGetters } from 'vuex'
+
+export default {
+    computed: {
+        ...mapGetters({
+            total: 'valorTotal'
+        }),
+    }
+}
+```
+**Exemplo de uso da Mutation:**
+```javascript
+mutations: {
+    adicionarProduto(state, payload) {
+        state.produtos.push(payload)
+    },
+},
+```
+Exemplo 1
+```javascript
+methods: {
+    adicionar() {
+        const produto = {
+            id: this.sequencia,
+            nome: `Produto ${this.sequencia}`,
+            quantidade: this.quantidade,
+            preco: this.preco
+        }
+        this.sequencia++
+
+        this.$store.state.produtos.push(produto)
+    }
+}
+```
+Exemplo 2
+```javascript
+methods: {
+    ...mapMutations(['adicionarProduto']),
+    adicionar() {
+        const produto = {
+            id: this.sequencia,
+            nome: `Produto ${this.sequencia}`,
+            quantidade: this.quantidade,
+            preco: this.preco
+        }
+        this.sequencia++
+
+        this.adicionarProduto(produto)
+    }
+}
+```
+
+**Exemplo de uso das Actions**
+```javascript
+actions: {
+    adicionarProduto({ commit }, payload) {
+        setTimeout(() => {
+            commit('adicionarProduto', payload)
+        }, 1000)
+    }
+
+    // adicionarProduto: {
+    //     root: true,
+    //     handler({ commit }, payload) {
+    //         setTimeout(() => {
+    //             commit('adicionarProduto', payload)
+    //         }, 1000)
+    //     }
+    // }
+},
+```
+```javascript
+methods: {
+    ...mapActions(['adicionarProduto']),
+    adicionar() {
+        const produto = {
+            id: this.sequencia,
+            nome: `Produto ${this.sequencia}`,
+            quantidade: this.quantidade,
+            preco: this.preco
+        }
+        this.sequencia++
+
+        //this.$store.state.produtos.push(produto)
+        //this.$store.commit('adicionarProduto', produto)
+        //this.$store.dispatch('adicionarProduto', produto)
+        this.adicionarProduto(produto)
+    }
+}
+```
+
+## Módulos com Vuex
+
+Estrutura de diretório
+- /store/modulos
+
+**Exemplos:**
+*carrinho.js*
+
+```javascript
+export default {
+    namespaced: true,    
+    state: {
+        produtos: [],
+    },
+    getters: {
+        valorTotal(state) {
+            return state.produtos.map(p => p.quantidade * p.preco)
+                .reduce((total, atual) => total + atual, 0)
+        }
+    },
+    mutations: {
+        adicionarProduto(state, payload) {
+            state.produtos.push(payload)
+        },
+    },
+    actions: {
+        adicionarProduto({ commit }, payload) {
+            setTimeout(() => {
+                commit('adicionarProduto', payload)
+            }, 1000)
+        }
+
+        // adicionarProduto: {
+        //     root: true,
+        //     handler({ commit }, payload) {
+        //         setTimeout(() => {
+        //             commit('adicionarProduto', payload)
+        //         }, 1000)
+        //     }
+        // }
+    },
+}
+```
+*parametros.js*
+
+```javascript
+export default {
+    state: {
+        quantidade: 2,
+        preco: 19.99
+    },
+    mutations: {
+        setQuantidade(state, payload) {
+            state.quantidade = payload
+        },
+        setPreco(state, payload) {
+            state.preco = payload
+        }
+    },
+}
+```
+
+Estrutura de diretório
+- /store
+
+*store.js*
+
+```javascript
+import Vue from "vue";
+import Vuex from "vuex";
+
+import carrinho from "./modules/carrinho";
+import parametros from "./modules/parametros";
+
+import * as getters from './modules/getters'
+
+Vue.use(Vuex)
+
+export default new Vuex.Store({
+    state: {
+        nome: 'Maria',
+        sobrenome: 'Silva'
+    },
+    getters,
+    modules: { carrinho, parametros }
+})
+```
+acessando
+```javascript
+
+export default {
+    data() {
+        return {
+            sequencia: 1,
+        }
+    },
+    computed: {
+        quantidade() {
+            return this.$store.state.parametros.quantidade //note que agora depois do state tem .parametros conforme configurado no módulo
+        },
+        preco() {
+            return this.$store.state.parametros.preco
+        }
+    },
+}
+```
+
+## Usando arquivos separados
+Serve para colocar métodos gerais que não se encaixa em nenhum módulo pré-existente
+
+*getters.js*
+```javascript
+export const getNome = state => state.getNome
+export const getNomeCompleto = state => state.nome + state.sobrenome
+```
+
+*store.js*
+```javascript
+import Vue from "vue";
+import Vuex from "vuex";
+
+import carrinho from "./modules/carrinho";
+import parametros from "./modules/parametros";
+
+//importando os getters que foram criados de forma geral
+import * as getters from './modules/getters'
+
+Vue.use(Vuex)
+
+export default new Vuex.Store({
+    state: {
+        nome: 'Maria',
+        sobrenome: 'Silva'
+    },
+    //importando os getters que foram criados de forma geral
+    getters,
+    modules: { carrinho, parametros }
+})
+```
+exemplo da chamado do getter direto em um módulo
+```javascript
+this.$store.getters.getNome
+this.$store.getters.getNomeCompleto
+```
+
+## Namespaced
+
+exemplo de uso do namespaced
+```javascript
+export default {
+    namespaced: true,    
+    state: {
+        produtos: [],
+    },
+    getters: {
+        valorTotal(state) {
+            return state.produtos.map(p => p.quantidade * p.preco)
+                .reduce((total, atual) => total + atual, 0)
+        }
+    },
+    mutations: {
+        adicionarProduto(state, payload) {
+            state.produtos.push(payload)
+        },
+    },
+    actions: {
+        adicionarProduto({ commit }, payload) {
+            setTimeout(() => {
+                commit('adicionarProduto', payload)
+            }, 1000)
+        }
+    }
+}
+```
+Uso do namespaced no componente vue
+```javascript
+import { mapGetters } from 'vuex'
+
+export default {
+    computed: {
+        ...mapGetters('carrinho',{
+            total: 'valorTotal'
+        }),
+        
+        produtos() {
+            return this.$store.state.carrinho.produtos
+        }
+    },
 }
 ```
